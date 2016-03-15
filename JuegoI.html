@@ -9,11 +9,31 @@ and open the template in the editor.
         <title>Juego del NUMERO</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="juegoUno.js"></script>
     </head>
     <body>
         <div>
-            Que te diviertas!! <br>
-            <input type="text" size="4" maxlength="1" value="1234" name="aleatorio">
+            Que numeros y orden elegi?<br>
+            Que te diviertas!! <br><br>
+            
+            <input type="text" size="4" maxlength="10" value="" id="intento"><br>
+            
+            <script>
+                var numero=1234;
+                window.onload = function() { document.onkeypress = concatenaCadena;}
+                function concatenaCadena(evObject) {
+                    if(document.getElementById('intento').value.length<4)
+                        var elCaracter = String.fromCharCode(evObject.which);
+                     //msg=msg.concat(elCaracter);
+                     //document.getElementById('intento').value;
+                    if(document.getElementById('intento').value.length==4) 
+                        console.log(document.getElementById('intento').value);
+                }
+                //document.getElementById('intento');
+                //console.log(document.getElementById('intento').value.length);
+                
+                
+            </script>
         </div>
     </body>
 </html>
