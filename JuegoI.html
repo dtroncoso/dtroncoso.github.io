@@ -9,25 +9,63 @@ and open the template in the editor.
         <title>Juego del NUMERO</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
     </head>
     <body>
-        <div>
-            Que numeros y orden elegi?<br>
-            Que te diviertas!! <br><br>
+        <div align="center">
+            <FONT FACE="arial" SIZE=5 id="historial" COLOR=black>
+            <B>Que numeros y orden elegi?</B><br>
+            <B>Que te diviertas!! </B><br><br>
+            </FONT><br><br>
             
-            <input type="text" size="4" maxlength="4" value="" id="intento"><br>
+            <img src="numeros.png" style="float:left; margin:10px;">
+            
+            <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57' size="4" id="intento"><br><br>
+            
+            <table  width="500" border="1" cellspacing="0" cellpadding="1">
+                <tr bgcolor="#990033" align="center"> 
+                    <td><b><font color=red>HISTORIAL DE INTENTOS</font></b></td> 
+                </tr>
+            </table>
+            <table  width="500" border="1" cellspacing="0" cellpadding="1" id="history">
+                <tr>
+                    <td>NUMERO</td><td>correctas</td><td>regulares</td>
+                </tr>
+                    
+            </table> 
+            
+            <FONT FACE="arial" SIZE=9 id="mensaje" COLOR=red>
+            <br>
+            </FONT><br>
             
             <script>
                 var numero=new Array(4);
+                numero[0]=Math.round(Math.random()*10)%10;
+                numero[1]=Math.round(Math.random()*10)%10;
+                numero[2]=Math.round(Math.random()*10)%10;
+                numero[3]=Math.round(Math.random()*10)%10;
+                
+                //numero[0]=1;
+                //numero[1]=2;
+                //numero[2]=3;
+                //numero[3]=4;
+                
                 var intento=new Array(4);
-                window.onload = function() { document.onkeypress = concatenaCadena;}
+                
+                var i=1,intentostot=0;
+                
+                window.onload = function() 
+                { 
+                    document.onkeypress = concatenaCadena;
+                }
                 function concatenaCadena(evObject) {
                     var elCaracter = String.fromCharCode(evObject.which);
                     var posic=document.getElementById('intento').value.length;
+                    
                     //console.log(String.fromCharCode(evObject.keyCode));
                     tecla = (document.all) ? evObject.keyCode : evObject.which;
                     
-                    if(posic<4)
+                    if(posic<3)
                     {
                         intento[posic]=elCaracter;
                     }
@@ -35,25 +73,70 @@ and open the template in the editor.
                      //document.getElementById('intento').value;
                     else
                     {
-                        if(posic===4&&tecla===13)
+                        if(posic===3)
                         {
+                            intento[posic]=elCaracter;
                             //comparo las diferencias con el numero random
-                            console.log(document.getElementById('intento').value);
-                            console.log(intento[0]);
-                            console.log(intento[1]);
-                            console.log(intento[2]);
-                            console.log(intento[3]);
-                            
-                            document.getElementById('intento').value="";
+                            //console.log(document.getElementById('intento').value+intento[3].toString());
+                            //console.log(numero[0]);
+                            //console.log(numero[1]);
+                            //console.log(numero[2]);
+                            //console.log(numero[3]);
+
                         }
-                        
+                        if(posic===4)
+                        {
+                            intentostot++;
+                            var correct=0,reg=0;
+                            for(var j=0;j<4;j++)
+                            {
+                                for(var k=0;k<4;k++)
+                                {
+                                    
+                                    if(j==k&&intento[j]==numero[k])
+                                    {
+                                        //console.log(j);
+                                        correct++;
+                                    }
+                                    else
+                                        if(intento[j]==numero[k])
+                                            reg++;
+                                }
+                            }
+                            
+                            var table = document.getElementById("history");
+                            var row=table.insertRow(i);
+                            var cell1 = row.insertCell(0);
+                            var cell2 = row.insertCell(1);
+                            var cell3 = row.insertCell(2);
+                           
+                            cell1.innerHTML=intento[0].toString()+intento[1].toString()+intento[2].toString()+intento[3].toString();
+                            cell2.innerHTML=correct;
+                            cell3.innerHTML=reg;
+                            
+                                                   
+                            i++;
+                            document.getElementById('intento').value="";
+                            intento[0]=elCaracter;
+                            
+                            if(correct==4)
+                            {
+                                document.getElementById("mensaje").innerHTML="FELICITACIONES!!! intentos: "+intentostot;
+                                document.getElementById("intento").disabled=true;
+                                
+                                
+                            }
+                        }
+
                     }
+                    
                 }
                 //document.getElementById('intento');
                 //console.log(document.getElementById('intento').value.length);
                 
-                
             </script>
         </div>
+            
+        
     </body>
 </html>
