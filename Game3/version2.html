@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>SURVIVE</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="js/phaser.min.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <div>Game II</div>
+
+        <script type="text/javascript">
+
+
+            var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {preload: preload, create: create, update: update});
+
+            function preload() {
+                game.load.image('fondo', 'assets/fondo.png');
+                game.load.image('ground', 'assets/plataforma.png');
+                game.load.image('stark', 'assets/stark.png');
+                game.load.spritesheet('hielo', 'assets/hielo.png', 63, 68);
+                game.load.spritesheet('arrow2', 'assets/arrow2.png');
+                game.load.spritesheet('nymeria', 'assets/nymeria.png', 58, 39);
+                //  Firefox doesn't support mp3 files, so use ogg
+                game.load.audio('mainmusic', ['assets/Maintheme.mp3']);
+                game.load.audio('usabonus', ['assets/aullido.mp3']);
+                game.load.audio('muere', ['assets/end.mp3']);
+
+            }
+
+            var jumpButton;
+            var bonusButton;
+            var fin = false;
+            var facing = 'right';
+            var hielo;
+            var bonus;
+            var flechas;
+            var music;
+            var score = 0;
+            var timer;
+            var aullido_audio;
+            var muere_audio;
+
+            function create()
+            {
+                game.physics.startSystem(Phaser.Physics.ARCADE);
+
+                game.add.sprite(0, 0, 'fondo');
+
+                platforms = game.add.group();
+                platforms.enableBody = true;
+
+                music = game.add.audio('mainmusic');
+                music.play();
+                aullido_audio= game.add.audio('usabonus');
+                muere_audio= game.add.audio('muere');
+                
+
+                //------------------mapa------------------
+                var ground = platforms.create(20, game.world.height - 130, 'ground');
+                //  Scale it to fit the width of the game 
+                ground.scale.setTo(1.3, 1);
+                ground.body.immovable = true;
+                var ground1 = platforms.create(400, game.world.height - 130, 'ground');
+                ground1.scale.setTo(1.3, 1);
+                ground1.body.immovable = true;
+
+                //------------------mapa----------------------
+
+                //-----------------bonus--------------------
+                bonus = game.add.group();
+                bonus.enableBody = true;
+                bonus.physicsBodyType = Phaser.Physics.ARCADE;
+
+                //bonus = game.add.group();
+                bonus.scale.setTo(0.5, 0.5);
+                bonus.create(50, 35, 'stark');
+                //bon1.scale.setTo(0.5, 0.5);
+                bonus.create(160, 35, 'stark');
+                //bon2.scale.setTo(0.5, 0.5);
+                //-----------------bonus--------------------
+
+                player = game.add.sprite(60, game.world.height - 190, 'nymeria');
+                //player.scale.setTo(1.5,1.5);
+
+                game.physics.arcade.enable(player);
+                player.body.bounce.y = 0.2;
+                player.body.gravity.y = 60;
+
+                player.animations.add('left', [3, 2, 1, 0], 5, true);
+                player.animations.add('right', [4, 5, 6, 7], 5, true);
+
+                player.animations.add('jumpleft', [16, 15, 14, 13, 12], 5, true);
+                player.animations.add('jumpright', [17, 18, 19, 20, 21], 5, true);
+                player.animations.add('bonusright', [11], 10, true);
+                player.animations.add('bonusleft', [10], 10, true);
+
+                player.body.collideWorldBounds = true;
+
+                //--------------------------hielos-----------------
+                hielos = game.add.sprite(game.world.centerX, 0, 'hielo');
+                game.physics.arcade.enable(hielos);
+                hielos.enableBody = true;
+                //hielos.body.gravity.y = 30;
+                hielos.scale.setTo(0.5, 0.5);
+                hielos.animations.add('estar', [0, 1, 2, 3, 4, 5, 6], 6, true);
+
+
+                //--------------------------hielos-----------------
+
+
+                //--------------------------flechas-----------------
+                flechas = game.add.group();
+                flechas.enableBody = true;
+                //flechas.visible = false;
+                //  Here we'll create 12 of them evenly spaced apart
+                for (var i = 0; i < 5; i++)
+                {
+                    //  Create a arow inside of the 'stars' group
+                    var arrow = flechas.create(game.world.randomX, 0, 'arrow2');
+                    //  Let gravity do its thing
+                    arrow.body.velocity.y = 200;
+                }
+                //--------------------------flechas-----------------
+
+                stateText = game.add.text(game.world.centerX, game.world.centerY, ' ', {font: '84px Arial', fill: '#fff'});
+                stateText.anchor.setTo(0.5, 0.5);
+                stateText.visible = false;
+
+                text = game.add.text(600, 30, 'SCORE: 0', {font: "30px Arial", fill: "#ffffff", align: "center"});
+                game.time.events.loop(Phaser.Timer.SECOND, updateScore, this);  //manda un seg por param
+
+                //*****************tiempos***********************
+                game.time.events.loop(Phaser.Timer.SECOND * 12, updateHielo, this);
+
+                game.time.events.loop(Phaser.Timer.SECOND / 2, disparaFlechas, this);
+                //*****************tiempos***********************
+
+                jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+                bonusButton = game.input.keyboard.addKey(Phaser.Keyboard.ENTER);
+                bonusButton.onDown.add(usaBonus, this);
+                
+                
+
+            }
+            function update()
+            {
+                game.physics.arcade.collide(player, platforms);
+                game.physics.arcade.overlap(player, flechas, alcanzado, null, this);
+                game.physics.arcade.overlap(player, hielos, agarraHielo, null, this);
+                player.body.velocity.x = 0;
+
+                hielos.animations.play('estar');
+                hielos.body.velocity.y = 70;
+                //console.log(hielos.body.position.y);
+
+                //--------------------------mueve------------------
+                cursors = game.input.keyboard.createCursorKeys();
+                if (cursors.left.isDown)
+                {
+                    //  Move to the left
+                    player.body.velocity.x = -200;
+
+                    player.animations.play('left');
+                    facing = 'left';
+                }
+                else if (cursors.right.isDown)
+                {
+                    //  Move to the right
+                    player.body.velocity.x = 200;
+
+                    player.animations.play('right');
+                    facing = 'right';
+                }
+                else if (jumpButton.isDown)
+                {
+                    //  Move to the left
+                    player.body.velocity.x = 250;
+                    if (facing == 'right')
+                    {
+
+                        player.body.velocity.x = 250;
+                        player.animations.play('jumpright');
+                    }
+                    else
+                    {
+                        player.body.velocity.x = -250;
+                        player.animations.play('jumpleft');
+                    }
+                }
+                else
+                {
+                    //  Stand still
+                    player.animations.stop();
+                    if (facing == 'right')
+                        player.frame = 9;
+                    else
+                        player.frame = 8;
+                }
+
+                //--------------------------mueve------------------
+                if (bonusButton.isDown)
+                {
+                    //  BONUS
+                    if (facing == 'left')
+                        player.animations.play('bonusleft');
+                    else
+                        player.animations.play('bonusright');
+
+                }
+
+            }
+
+            function usaBonus()
+            {
+                //borrar flechas
+                flechas.callAll('kill');
+                //quitar bonus
+                bon = bonus.getFirstAlive();
+                //console.log(bonus.length);
+                if (bon)
+                {
+                    bon.kill();
+                }
+                aullido_audio.play();
+
+            }
+            function alcanzado(player, arrow)
+            {
+
+                player.kill();
+                arrow.kill();
+                muere_audio.play();
+                fin = true;
+                //console.log(player.body.position.x, player.body.position.y);
+                stateText.text = " GAME OVER \n Click to restart \n score: " + score;
+                stateText.visible = true;
+                
+                game.input.onTap.addOnce(restart,this);
+            }
+            function agarraHielo(player, hielos)
+            {
+                hielos.kill();
+                bon = bonus.getFirstDead();
+                if (bon)
+                    bon.revive();
+
+            }
+            function disparaFlechas()
+            {
+                fle = flechas.create(game.world.randomX, 0, 'arrow2');
+                fle2 = flechas.create(game.world.randomX, 0, 'arrow2');
+
+                fle.body.velocity.y = 150;
+                fle2.body.velocity.y = 150;
+                /*fle = flechas.getFirstDead();
+                 if(fle)
+                 {
+                 fle.body.position.x=world.randomX;
+                 fle.revive();
+                 }*/
+            }
+            function updateHielo()
+            {
+                //hielos.revive();
+
+                if (hielos.alive)
+                {
+                    //console.log('**vive**');
+                    hielos.position.x = game.world.randomX;
+                    hielos.position.y = 0;
+                } else
+                {
+                    hielos.revive();
+                    hielos.position.x = game.world.randomX;
+                    hielos.position.y = 0;
+                }
+                //hielos.revive();
+                //console.log(hielos.position.y+'******');
+                //timer.add(12000, llegaBonus, this);
+
+            }
+            function updateScore() {
+
+                //console.log(hielos);
+                if (!fin)
+                {
+                    score++;
+                    text.setText('SCORE: ' + score);
+                }
+            }
+            function restart() {
+
+                //resets the life count
+                bonus.callAll('revive');
+                flechas.callAll('kill');
+                //  And brings the aliens back from the dead :)
+                fin = false;
+                score=0;
+                //revives the player
+                player.revive();
+                //hides the text
+                stateText.visible = false;
+
+            }
+
+
+        </script>
+    </body>
+</html>

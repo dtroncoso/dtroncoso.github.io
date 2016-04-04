@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="js/phaser.min.js" type="text/javascript"></script>
+    </head>
+    <body>
+        <div>JUEGO II</div>
+        <script type="text/javascript">
+            
+
+            var game = new Phaser.Game(3200, 600, Phaser.AUTO, '', {preload: preload, create: create, update: update});
+
+            function preload() {
+                game.load.image('fondo', 'assets/fondo.png');
+                game.load.image('ground', 'assets/plataforma.png');
+                game.load.image('trampas', 'assets/platform.png');
+                game.load.image('stone', 'assets/stone.png');
+                game.load.image('arbusto', 'assets/arbusto.png');
+                game.load.image('arcian', 'assets/arcian.png');
+                game.load.image('salto', 'assets/nymeriaJump.png');
+                game.load.spritesheet('hielo', 'assets/hielo.png', 63, 68);
+                game.load.spritesheet('nymeria', 'assets/nymeria.png', 58, 39);
+                //  Firefox doesn't support mp3 files, so use ogg
+                game.load.audio('intro', ['assets/got2.mp3']);
+                
+            }
+            
+            var jumpButton;
+            var facing = 'right';
+            var hielo;
+            var music;
+            
+            function create()
+            {
+                game.physics.startSystem(Phaser.Physics.ARCADE);
+                
+                game.add.sprite(0, 0, 'fondo');
+                
+                platforms = game.add.group();
+                platforms.enableBody = true;
+                
+                tramp=game.add.group();
+                tramp.enableBody=true;
+                
+                music = game.add.audio('intro');
+                music.play();
+                
+                //------------------mapa------------------
+                var ground = platforms.create(20, game.world.height-130, 'ground');
+                //  Scale it to fit the width of the game 
+                ground.scale.setTo(1, 1);
+                ground.body.immovable = true;
+                
+                var ground1 = platforms.create(400, game.world.height-130, 'ground');
+                ground1.body.immovable = true;
+                var ground2 = platforms.create(1000, game.world.height-130, 'ground');
+                ground2.body.immovable = true;
+                var ground3 = platforms.create(1900, game.world.height-130, 'ground');
+                ground3.body.immovable = true;
+                var ground4 = platforms.create(2191, game.world.height-130, 'ground');
+                ground4.body.immovable = true;
+                var groundU = platforms.create(2900, game.world.height-130, 'ground');
+                groundU.body.immovable = true;
+                
+                var ledge = tramp.create(1300, 470, 'trampas');
+                ledge.scale.setTo(0.2, 1);
+                //ledge.body.immovable = true;
+                var ledge = tramp.create(1400, 470, 'trampas');
+                ledge.scale.setTo(0.2, 1);
+                //ledge.body.immovable = true;
+                var ledge = tramp.create(1500, 470, 'trampas');
+                ledge.scale.setTo(0.2, 1);
+                var ledge = tramp.create(1600, 470, 'trampas');
+                ledge.scale.setTo(0.2, 1);
+                var ledge = tramp.create(1700, 470, 'trampas');
+                ledge.scale.setTo(0.2, 1);
+                //------------------mapa----------------------
+                
+                arcian = game.add.sprite(3000, game.world.height - 350, 'arcian');
+                stone = game.add.sprite(1980, game.world.height - 170, 'stone');
+                hielos= game.add.group();
+                hielos.enableBody = true;
+                
+                hielo = hielos.create(600, game.world.height - 200, 'hielo');
+                hielo.animations.add('estar', [0,1,2,3,4,5,6], 6, true);
+                player = game.add.sprite(60, game.world.height - 180, 'nymeria');
+                
+                
+                game.physics.arcade.enable(player);
+                player.body.bounce.y = 0.2;
+                player.body.gravity.y = 60;
+                //player.body.collideWorldBounds = true;
+                
+                player.animations.add('left', [3,2,1,0], 5, true);
+                player.animations.add('right', [4,5,6,7], 5, true);
+                
+                player.animations.add('jumpleft', [16,15,14,13,12], 5, true);
+                player.animations.add('jumpright', [17,18,19,20,21], 5, true);
+                jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+                
+                //game.camera.follow(player);
+             
+            }
+            function update()
+            {
+                game.physics.arcade.collide(player, platforms);
+                game.physics.arcade.collide(hielos, platforms);
+                game.physics.arcade.overlap(player, hielos, collectICE, null, this);
+                player.body.velocity.x = 0;
+                
+                hielo.animations.play('estar');
+                
+                cursors = game.input.keyboard.createCursorKeys();
+                if (cursors.left.isDown)
+                {
+                    //  Move to the left
+                    player.body.velocity.x = -200;
+
+                    player.animations.play('left');
+                    facing = 'left';
+                }
+                else if (cursors.right.isDown)
+                {
+                    //  Move to the right
+                    player.body.velocity.x = 200;
+
+                    player.animations.play('right');
+                    facing = 'right';
+                }
+                else if (jumpButton.isDown)
+                {
+                    //  Move to the left
+                    player.body.velocity.x = 250;
+                    if(facing=='right')
+                    {
+                        
+                        player.body.velocity.x = 250;
+                        player.animations.play('jumpright');
+                    }
+                    else
+                    {
+                        player.body.velocity.x = -250;
+                        player.animations.play('jumpleft');
+                    }
+                }
+                else
+                {
+                    //  Stand still
+                    player.animations.stop();
+                    if(facing=='right')
+                        player.frame = 9;
+                    else
+                        player.frame = 8;
+                }
+            }
+            
+            function collectICE(player,hielo)
+            {
+                
+                hielo.kill();
+                console.log(player.body.position.x,player.body.position.y);
+                player.scale.setTo(2,2);
+                player.body.position.x=543;
+                player.body.position.y=380;
+                
+                
+                
+            }
+
+        </script>
+    </body>
+</html>
