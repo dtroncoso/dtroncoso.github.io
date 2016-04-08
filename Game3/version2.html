@@ -219,15 +219,17 @@ and open the template in the editor.
             function usaBonus()
             {
                 //borrar flechas
-                flechas.callAll('kill');
+                
                 //quitar bonus
                 bon = bonus.getFirstAlive();
                 //console.log(bonus.length);
                 if (bon)
                 {
+                    flechas.callAll('kill');
                     bon.kill();
+                    aullido_audio.play();
                 }
-                aullido_audio.play();
+                
 
             }
             function alcanzado(player, arrow)
